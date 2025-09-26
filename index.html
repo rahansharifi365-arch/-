@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>برنامه‌ریزی حرفه‌ای من</title>
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+  <style>
+    body {
+      font-family: "Vazir", sans-serif;
+      background: #f0f0f0;
+      direction: rtl;
+      padding: 20px;
+    }
+    h1 { text-align: center; color: #333; }
+    .form-group { margin-bottom: 10px; }
+    input, select {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 5px;
+    }
+    button {
+      background-color: #28a745; color: white;
+      padding: 10px; border: none; border-radius: 5px;
+      cursor: pointer; width: 100%; margin-top: 10px;
+    }
+    ul { list-style: none; padding: 0; }
+    li {
+      background: #fff; margin: 10px 0; padding: 10px;
+      border-left: 5px solid #007bff; border-radius: 5px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .done { text-decoration: line-through; color: gray; }
+    .category-درس { border-left-color: #17a2b8; }
+    .category-کار { border-left-color: #ffc107; }
+    .category-شخصی { border-left-color: #dc3545; }
+    #forgotList {
+      background: #ffecec; padding: 10px;
+      border-radius: 5px; margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>برنامه‌ریزی حرفه‌ای من</h1>
+
+  <div id="taskForm">
+    <div class="form-group">
+      <label>عنوان کار:</label>
+      <input type="text" id="taskInput" placeholder="مثلاً مطالعه فصل ۲ شیمی">
+    </div>
+    <div class="form-group">
+      <label>دسته‌بندی:</label>
+      <select id="categorySelect">
+        <option value="درس">درس</option>
+        <option value="کار">کار</option>
+        <option value="شخصی">شخصی</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>تاریخ:</label>
+      <input type="date" id="dateInput">
+    </div>
+    <div class="form-group">
+      <label>ساعت:</label>
+      <input type="time" id="timeInput">
+    </div>
+    <button onclick="addTask()">افزودن</button>
+
+    <div class="form-group">
+      <label>تایمر (دقیقه):</label>
+      <input type="number" id="timerInput" placeholder="مثلاً 25">
+      <button onclick="startTimer()">شروع تایمر</button>
+    </div>
+
+    <div class="form-group">
+      <label>لینک موزیک دلخواه:</label>
+      <input type="text" id="musicLink" placeholder="لینک آهنگ از یوتیوب یا گوگل">
+      <button onclick="playMusic()">پخش موزیک</button>
+    </div>
+  </div>
+
+  <ul id="taskList"></ul>
+
+  <div id="forgotList">
+    <h3>فراموش‌شده‌ها</h3>
+    <ul id="forgotTasks"></ul>
+  </div>
+
+  <audio id="alarmSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+
+  <script>
+    function addTask() {
+      const text = document.getElementById("taskInput").value.trim();
+      const category = document.getElementById("categorySelect").value;
+      const date = document.getElementById("dateInput").value;
+      const time = document.getElementById("timeInput").value;
+      if (!text || !date || !time) {
+        alert("لطفاً عنوان، تاریخ و ساعت را وارد کنید.");
+        return;
+      }
+      const task = { text, category, date, time, done: false };
+      renderTask(task);
+      checkForgot(task);
+      document.getElementById("taskInput").value = "";
+    }
+
+    function renderTask(task) {
+      const li = document.createElement("li");
+      li.classList.add(category-${task.category});
+      li.innerHTML = `
+        <span onclick="toggleDone(this)" class="${task.done ? 'done' : ''}">
+          ${task.text} <small>(${task.date} - ${task.time})</small>
+        </span>
+        <button onclick="removeTask(this)">🗑</button>
+      `;
+      document.getElementById("taskList").appendChild(li);
+    }
+
+    function toggleDone(el) {
+      el.classList.toggle("done");
+    }
+
+    function removeTask(btn) {
+      btn.parentElement.remove();
+    }
+
+    function checkForgot(task) {
+      const now = new Date();
+      const taskTime = new Date(${task.date}T${task.time});
+      if (taskTime < now) {
+        const li = document.createElement("li");
+        li.innerText = ${task.text} (${task.date} - ${task.time});
+        document.getElementById("forgotTasks").appendChild(li);
+        notify(کار عقب‌افتاده: ${task.text});
+      }
+    }
+
+    function notify(msg) {
+      if (Notification.permission === "granted") {
+        new Notification(msg);
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            new Notification(msg);
+          }
+        });
+      }
+    }
+
+    function startTimer() {
+      const minutes = parseInt(document.getElementById("timerInput").value);
+      if (isNaN(minutes) || minutes <= 0) {
+        alert("لطفاً زمان تایمر را به دقیقه وارد کنید.");
+        return;
+      }
+      setTimeout(() => {
+        document.getElementById("alarmSound").play();
+        if (navigator.vibrate) navigator.vibrate([500, 300, 500]);
+        notify("زمان تایمر به پایان رسید!");
+      }, minutes * 60000);
+    }
+
+    function playMusic() {
+      const link = document.getElementById("musicLink").value;
+      if (link) window.open(link, "_blank");
+    }
+  </script>
+</body>
+</html>
